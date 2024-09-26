@@ -76,7 +76,7 @@ jobs:
       #   run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.SFDX_DECRYPTION_KEY }} -i ${{ secrets.SFDX_DECRYPTION_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
       - name: 'Authenticate using SFDX_AUTH_URL'
         run: | 
-          echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s -u
+          echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s
       - name: check deploy
         run: |
           cd repo
