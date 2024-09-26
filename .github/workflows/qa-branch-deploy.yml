@@ -44,45 +44,74 @@
 #         run: sfdx auth:logout --all --noprompt
 
 
-name: check deploy metadata
+# name: check deploy metadata
+# on:
+#   pull_request:                                  # by default this includes opened, synchronize (commit to PR), reopened
+#     branches:    
+#       - 'qa'                                # additional branches can be added as required, possibly master
+# jobs:
+#   check-deploy:
+#     runs-on: ubuntu-latest                       # ubuntu-latest includes openssl, jq and node, but not sfdx
+#     timeout-minutes: 60
+#     steps:
+#       - name: install Salesforce CLI             # this is faster than npm installation
+#         run: |
+#           wget -nv https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
+#           mkdir sfdx-cli
+#           tar xJf sfdx-linux-x64.tar.xz -C sfdx-cli --strip-components 1
+#           echo "$GITHUB_WORKSPACE/sfdx-cli/bin" >> $GITHUB_PATH
+#       - name: check out repository code          # checkout the repo into a subfolder: repo
+#         uses: actions/checkout@v2
+#         with:   
+#           path: 'repo'
+#       - name: create ssh connection for ci repo  # unofficial action to authenticate back to separate repo with ci scripts
+#         uses: webfactory/ssh-agent@v0.5.4
+#         with:
+#           ssh-private-key: ${{ secrets.SSH }}
+#       - name: check out qa repo
+#         run: git clone git@github.com:purlos/sfdc-ci.git
+#       - name: remove certain metadata types from deployment
+#         run: ./sfdc-ci/sfdx/sfdx_metadata_removal.sh
+#       # - name: run script to authenticate sfdx to qa
+#       #   run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.SFDX_DECRYPTION_KEY }} -i ${{ secrets.SFDX_DECRYPTION_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
+#       - name: 'Authenticate using SFDX_AUTH_URL'
+#         run: | 
+#           echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s
+#       - name: check deploy
+#         run: |
+#           cd repo
+#           sfdx force:source:deploy -u CI -c --verbose -w 60 -l RunLocalTests -p force-app/main/default --apiversion 60.0
+#       - name: logout of the Salesforce org 
+#         run: sfdx auth:logout --all --noprompt
+
+name: Validate pull request
+
 on:
-  pull_request:                                  # by default this includes opened, synchronize (commit to PR), reopened
-    branches:    
-      - 'qa'                                # additional branches can be added as required, possibly master
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
+    paths:
+      - 'force-app/**'
+
 jobs:
-  check-deploy:
-    runs-on: ubuntu-latest                       # ubuntu-latest includes openssl, jq and node, but not sfdx
-    timeout-minutes: 60
-    steps:
-      - name: install Salesforce CLI             # this is faster than npm installation
-        run: |
-          wget -nv https://developer.salesforce.com/media/salesforce-cli/sfdx/channels/stable/sfdx-linux-x64.tar.xz
-          mkdir sfdx-cli
-          tar xJf sfdx-linux-x64.tar.xz -C sfdx-cli --strip-components 1
-          echo "$GITHUB_WORKSPACE/sfdx-cli/bin" >> $GITHUB_PATH
-      - name: check out repository code          # checkout the repo into a subfolder: repo
-        uses: actions/checkout@v2
-        with:   
-          path: 'repo'
-      - name: create ssh connection for ci repo  # unofficial action to authenticate back to separate repo with ci scripts
-        uses: webfactory/ssh-agent@v0.5.4
+  validate-deployment:
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-slim
+    steps:      
+      - name: 'Checkout source code'
+        uses: actions/checkout@v4
         with:
-          ssh-private-key: ${{ secrets.SSH }}
-      - name: check out qa repo
-        run: git clone git@github.com:purlos/sfdc-ci.git
-      - name: remove certain metadata types from deployment
-        run: ./sfdc-ci/sfdx/sfdx_metadata_removal.sh
-      # - name: run script to authenticate sfdx to qa
-      #   run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.SFDX_DECRYPTION_KEY }} -i ${{ secrets.SFDX_DECRYPTION_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
+          fetch-depth: 0
+      
       - name: 'Authenticate using SFDX_AUTH_URL'
         run: | 
-          echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s
-      - name: check deploy
+          echo ${{ secrets.SFDX_AUTH_URL }} | sf org login sfdx-url -s -u
+
+      - name: 'Validate'
         run: |
-          cd repo
-          sfdx force:source:deploy -u CI -c --verbose -w 60 -l RunLocalTests -p force-app/main/default --apiversion 60.0
-      - name: logout of the Salesforce org 
-        run: sfdx auth:logout --all --noprompt
+          sf project deploy validate -d force-app/ -l RunLocalTests -w 30          
 
 
 #  pull-requests: 
