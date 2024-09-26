@@ -72,8 +72,11 @@ jobs:
         run: git clone git@github.com:purlos/sfdc-ci.git
       - name: remove certain metadata types from deployment
         run: ./sfdc-ci/sfdx/sfdx_metadata_removal.sh
-      - name: run script to authenticate sfdx to qa
-        run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.SFDX_DECRYPTION_KEY }} -i ${{ secrets.SFDX_DECRYPTION_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
+      # - name: run script to authenticate sfdx to qa
+      #   run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.SFDX_DECRYPTION_KEY }} -i ${{ secrets.SFDX_DECRYPTION_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
+      - name: 'Authenticate using SFDX_AUTH_URL'
+        run: | 
+          echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s -u
       - name: check deploy
         run: |
           cd repo
@@ -81,6 +84,21 @@ jobs:
       - name: logout of the Salesforce org 
         run: sfdx auth:logout --all --noprompt
 
+
+#  pull-requests: 
+#     VLD-*:
+#         - step:
+#               script:
+#                 #===login===
+#                 - openssl enc -d -aes-256-cbc -in build/server.key.enc -out build/server.key -K $AESKEY -iv $IVKEY -nopad #decrypt server.key
+#                 - sfdx force:auth:jwt:grant --clientid $DEV_CONSUMER_KEY --jwtkeyfile build/server.key --username $DEV_USERNAME --instanceurl https://test.salesforce.com
+#                 #===lint lightning===
+#                 - sfdx force:lightning:lint src/aura/
+#                 #===check only===
+#                 # The check only succeeds if all tests pass and 
+#                 # code coverage is above 75%. To override this use the param -o
+#                 - sfdx force:source:deploy -l RunLocalTests -c -w 150 -u $DEV_USERNAME -p ./force-app/ --verbose
+#                 - echo 'Validated successfully'
 
 
 
