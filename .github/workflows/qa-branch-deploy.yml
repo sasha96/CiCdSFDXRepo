@@ -73,7 +73,7 @@ jobs:
       - name: remove certain metadata types from deployment
         run: ./sfdc-ci/sfdx/sfdx_metadata_removal.sh
       - name: run script to authenticate sfdx to qa
-        run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ${{ secrets.REPO_NAME }} -k ${{ secrets.DECR }} -i ${{ secrets.DECR_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
+        run: ./sfdc-ci/sfdx/sfdx_authenticate.sh -r ./sfdc-ci -k ${{ secrets.DECR }} -i ${{ secrets.DECR_IV }} -p ${{ secrets.URL_TO_DEPLOY }} -c ${{ secrets.CONSUMER_SECRET }} -u ${{ secrets.USER_NAME }}
       - name: check deploy
         run: |
           cd repo
