@@ -1,0 +1,23 @@
+name: deploy metadata
+on:
+  push:
+    branches:    
+      - 'qa'      
+jobs:
+  check-deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-slim
+    steps:      
+      - name: 'Checkout source code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 'Authenticate using SF_URL'
+        run: | 
+          echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s -u 
+      - name: 'Deploy'
+        run: |
+          sfdx force:source:deploy -u CI --verbose -w 60 -l NoTestRun -p force-app/main/default
+      - name: logout of the Salesforce org 
+        run: sfdx auth:logout --all --noprompt
