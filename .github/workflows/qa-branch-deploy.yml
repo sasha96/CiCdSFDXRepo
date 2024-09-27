@@ -18,6 +18,6 @@ jobs:
           echo ${{ secrets.SF_URL }} | sf org login sfdx-url -s -u 
       - name: 'Deploy'
         run: |
-          sfdx force:source:deploy -u CI --verbose -w 60 -l NoTestRun -p force-app/main/default
+          sf project deploy start -d force-app/
       - name: logout of the Salesforce org 
         run: sfdx auth:logout --all --noprompt
